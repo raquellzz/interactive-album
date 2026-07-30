@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Lock, LogOut, Trash2, ShieldCheck, MessageSquare, Camera, Eye, EyeOff, KeyRound } from 'lucide-react';
 import { Photo } from '../components/PhotoGrid';
 import { Message } from '../components/MessageBoard';
+import { useRouter } from 'next/navigation';
 
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -16,6 +17,44 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<'photos' | 'messages'>('photos');
 
   const [eventId, setEventId] = useState<string | null>(null);
+
+  const router = useRouter();
+  const [eventIcon, setEventIcon] = useState<string>('/icon.png');
+  const [uploadingIcon, setUploadingIcon] = useState<boolean>(false);
+  const [accessKey, setAccessKey] = useState('');
+
+  // Função para fazer o upload do PNG do ícone e salvar na tabela events
+  const handleIconChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !eventId) return;
+
+    setUploadingIcon(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('eventId', eventId);
+
+      const res = await fetch('/api/admin/events/icon', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Erro ao atualizar o ícone');
+      }
+
+      setEventIcon(data.iconUrl);
+      alert('Ícone do evento atualizado com sucesso!');
+    } catch (err: any) {
+      alert(`Erro: ${err.message || 'Falha ao enviar ícone'}`);
+      console.error(err);
+    } finally {
+      setUploadingIcon(false);
+      e.target.value = '';
+    }
+  };
 
   const fetchAdminData = useCallback(async (id: string) => {
     setLoading(true);
@@ -58,16 +97,20 @@ export default function AdminPage() {
       const res = await fetch('/api/admin/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ accessKey, password }), 
       });
 
       if (res.ok) {
+        const data = await res.json();
+        setEventId(data.eventId);
         setIsAuthenticated(true);
+        fetchAdminData(data.eventId);
       } else {
-        setLoginError('Senha de admin incorreta.');
+        const errData = await res.json();
+        setLoginError(errData.error || 'Erro nas credenciais.');
       }
     } catch (err) {
-      setLoginError('Erro ao autenticar.');
+      setLoginError('Erro ao conectar com o servidor.');
     }
   };
 
@@ -93,7 +136,9 @@ export default function AdminPage() {
 
   if (!isAuthenticated) {
     return (
+      
       <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
+        
         <form onSubmit={handleLogin} className="max-w-sm w-full bg-gray-800 p-8 rounded-3xl border border-gray-700 shadow-2xl space-y-6">
           <div className="text-center space-y-2">
             <div className="inline-flex p-3 bg-purple-500/20 text-purple-400 rounded-2xl mb-1">
@@ -102,11 +147,27 @@ export default function AdminPage() {
             <h1 className="text-xl font-bold text-white">Acesso Restrito - Formanda</h1>
             <p className="text-xs text-gray-400">Digite a senha de ADMIN configurada no ambiente</p>
           </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
+              Chave do Evento
+            </label>
+            <input
+              type="text"
+              placeholder="Ex: RAQUEL2026"
+              value={accessKey}
+              onChange={(e) => setAccessKey(e.target.value.toUpperCase())}
+              className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl text-white text-sm focus:ring-2 focus:ring-purple-500 uppercase font-mono outline-none"
+              required
+            />
+          </div>
 
           <div>
+            <label className="block text-xs font-semibold text-gray-400 tracking-wider mb-1 mt-3">
+              Senha do Anfitrião
+            </label>
             <input
               type="password"
-              placeholder="Senha de Admin..."
+              placeholder="Senha de moderação..."
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl text-white text-sm focus:ring-2 focus:ring-purple-500 outline-none"
@@ -126,7 +187,18 @@ export default function AdminPage() {
           >
             Acessar Painel
           </button>
+          {/* Adicione no topo ou rodapé do form de login do admin */}
+          <div className="text-center pt-2">
+            <button
+              type="button"
+              onClick={() => router.push('/')}
+              className="text-xs text-purple-400 hover:text-purple-300 underline underline-offset-4"
+            >
+              ← Voltar para a Galeria de Convidados
+            </button>
+          </div>
         </form>
+        
       </div>
     );
   }
@@ -148,6 +220,35 @@ export default function AdminPage() {
           </button>
         </div>
       </header>
+      {/* CARD DE CONTROLE DO EVENTO ATUAL */}
+      <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between mb-6">
+        <div className="flex items-center space-x-3">
+          <div className="w-12 h-12 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+            {uploadingIcon ? (
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-purple-600"></div>
+            ) : (
+              <img src={eventIcon} alt="Ícone Atual" className="w-8 h-8 object-contain" />
+            )}
+          </div>
+          <div>
+            <h3 className="font-bold text-gray-800 text-sm">Ícone do Navegador (Favicon)</h3>
+            <p className="text-xs text-gray-500">
+              Personalize a imagem que aparece na aba para os seus convidados
+            </p>
+          </div>
+        </div>
+
+        <label className="cursor-pointer px-4 py-2 bg-purple-100 hover:bg-purple-200 text-purple-700 text-xs font-semibold rounded-xl transition-colors flex items-center gap-1.5 shadow-xs">
+          <span>{uploadingIcon ? 'Enviando...' : 'Trocar Ícone (PNG)'}</span>
+          <input
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            disabled={uploadingIcon}
+            onChange={handleIconChange}
+            className="hidden"
+          />
+        </label>
+      </div>
 
       <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
         {/* Abas */}

@@ -12,7 +12,7 @@ export async function POST(request: Request) {
 
     const { data: event, error } = await supabase
       .from('events')
-      .select('id, name')
+      .select('id, name, icon_url')
       .eq('access_key', accessKey.trim().toUpperCase())
       .single();
 
@@ -37,6 +37,7 @@ export async function POST(request: Request) {
       folder,
       eventId: event.id,
       eventName: event.name,
+      iconUrl: event.icon_url || '/icon.png',
       apiKey: process.env.CLOUDINARY_API_KEY,
       cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
     });

@@ -19,6 +19,20 @@ export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number | null>(null);
+  const [eventIconUrl, setEventIconUrl] = useState<string>('/icon.png');
+
+  useEffect(() => {
+  if (eventId && eventIconUrl) {
+    let favicon = document.querySelector<HTMLLinkElement>("link[rel*='icon']");
+    if (!favicon) {
+      favicon = document.createElement('link');
+      favicon.rel = 'icon';
+      document.head.appendChild(favicon);
+    }
+    favicon.type = 'image/png';
+    favicon.href = eventIconUrl;
+  }
+}, [eventId, eventIconUrl]);
 
   const fetchPhotos = useCallback(async (id: string) => {
     try {
@@ -53,11 +67,12 @@ export default function Home() {
     }
   }, [eventId, fetchPhotos, fetchMessages]);
 
-  const handleLogin = (name: string, key: string, id: string, eventTitle: string) => {
+  const handleLogin = (name: string, key: string, id: string, eventTitle: string, iconUrl?: string) => {
     setGuestName(name);
     setAccessKey(key);
     setEventId(id);
     setEventName(eventTitle);
+    if (iconUrl) setEventIconUrl(iconUrl);
   };
 
   const handleLogout = () => {

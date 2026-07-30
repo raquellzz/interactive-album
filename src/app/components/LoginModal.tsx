@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Sparkles, KeyRound, User } from 'lucide-react';
+import { Sparkles, KeyRound, User, ShieldCheck } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 interface LoginModalProps {
-  onLogin: (name: string, accessKey: string, eventId: string, eventName: string) => void;
+  onLogin: (name: string, accessKey: string, eventId: string, eventName: string, iconUrl?: string) => void;
 }
 
 export default function LoginModal({ onLogin }: LoginModalProps) {
@@ -12,6 +13,7 @@ export default function LoginModal({ onLogin }: LoginModalProps) {
   const [accessKey, setAccessKey] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -51,7 +53,8 @@ export default function LoginModal({ onLogin }: LoginModalProps) {
       localStorage.setItem('guest_name', name.trim());
       localStorage.setItem('guest_key', accessKey.trim().toUpperCase());
 
-      onLogin(name.trim(), accessKey.trim().toUpperCase(), data.eventId, data.eventName);
+      // Passa o iconUrl que a rota de assinatura leu da tabela events
+      onLogin(name.trim(), accessKey.trim().toUpperCase(), data.eventId, data.eventName, data.iconUrl);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -62,18 +65,18 @@ export default function LoginModal({ onLogin }: LoginModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 animate-fade-in">
+        {/* CABEÇALHO GENÉRICO DE EVENTOS */}
         <div className="text-center space-y-2">
           <div className="inline-flex p-3 bg-purple-100 text-purple-600 rounded-2xl mb-1">
             <Sparkles className="w-8 h-8" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-800">Álbum de Formatura</h2>
+          <h2 className="text-2xl font-bold text-gray-800">Álbum Compartilhado</h2>
           <p className="text-sm text-gray-500">
-            Identifique-se para acessar a galeria e compartilhar suas fotos do jantar!
+            Identifique-se e digite a chave de acesso do seu evento para compartilhar fotos e ver a galeria!
           </p>
         </div>
 
         <form onSubmit={handleJoin} className="space-y-4">
-          {/* Campo Nome */}
           <div>
             <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">
               Seu Nome
@@ -91,7 +94,6 @@ export default function LoginModal({ onLogin }: LoginModalProps) {
             </div>
           </div>
 
-          {/* Campo Chave do Evento */}
           <div>
             <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">
               Chave de Acesso
@@ -103,7 +105,7 @@ export default function LoginModal({ onLogin }: LoginModalProps) {
                 required
                 value={accessKey}
                 onChange={(e) => setAccessKey(e.target.value.toUpperCase())}
-                placeholder="Ex: TESTE123"
+                placeholder="Ex: EVENTO2026"
                 className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:bg-white outline-none text-sm uppercase font-mono text-gray-800 transition-all"
               />
             </div>
@@ -123,6 +125,18 @@ export default function LoginModal({ onLogin }: LoginModalProps) {
             {loading ? 'Acessando...' : 'Entrar na Galeria'}
           </button>
         </form>
+
+        {/* ATALHO GENÉRICO PARA O ADMIN DO EVENTO */}
+        <div className="pt-3 border-t border-gray-100 text-center">
+          <button
+            type="button"
+            onClick={() => router.push('/admin')}
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-400 hover:text-purple-600 transition-colors py-1 px-2 rounded-lg"
+          >
+            <ShieldCheck className="w-3.5 h-3.5" />
+            <span>Área dos Anfitriões (Admin)</span>
+          </button>
+        </div>
       </div>
     </div>
   );
