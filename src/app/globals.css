@@ -1,26 +1,454 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Azuis royal/marinho — fixos nos dois temas, usados em gradientes/badges */
+  --color-navy: #0d1128;
+  --color-navy-2: #161c3f;
+  --color-royal: #29397e;
+  --color-royal-2: #3c4fa8;
+
+  /* Roxo de destaque — fixo nos dois temas (ramp de "chip", não de texto) */
+  --color-accent-100: #f5f4ff;
+  --color-accent-200: #e7e5fe;
+  --color-accent-300: #d2cefd;
+  --color-accent-400: #b5abfc;
+  --color-accent-500: #968ae0;
+  --color-accent-600: #796cbf;
+  --color-accent-700: #5d5294;
+  --color-accent-800: #423a6a;
+  --color-accent-900: #2b2741;
+
+  /* Tons sempre-claros para texto/traços que ficam sobre o fundo sempre-escuro do Álbum Digital
+     (o "livro" não muda de tema — precisa de tokens fixos, imunes à inversão do tema) */
+  --color-onbook-text: #f5f6ff;
+  --color-onbook-accent: #c3bbf0;
+  --color-onbook-muted: #aeb4d6;
+  --color-onbook-divider: rgba(255, 255, 255, 0.16);
+  --color-onbook-chip-bg: rgba(10, 13, 32, 0.55);
+  /* "Papel" das folhas e cartões do álbum — mesclado à paleta navy/royal do livro */
+  --color-onbook-leaf: #1b2352;
+  --color-onbook-leaf-2: #212a5f;
+  --color-onbook-card: #2b356e;
+  --color-onbook-card-2: #333e82;
+
+  --font-heading: var(--font-inter), system-ui, sans-serif;
+  --font-body: var(--font-inter), system-ui, sans-serif;
+
+  --space-1: 2.8px;
+  --space-2: 5.6px;
+  --space-3: 8.4px;
+  --space-4: 11.2px;
+  --space-6: 16.8px;
+  --space-8: 22.4px;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 14px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* — tema escuro (padrão) — */
+:root,
+:root[data-theme='dark'] {
+  --color-bg: #12141f;
+  --color-surface: #232532;
+  --color-surface-2: #2b2e3d;
+  --color-text: #e9e9ed;
+  --color-accent: #9184d9;
+  --color-accent-2: #a7a1db;
+  --color-divider: color-mix(in srgb, var(--color-text) 16%, transparent);
+
+  --color-neutral-100: #f3f5fe;
+  --color-neutral-200: #e4e7f5;
+  --color-neutral-300: #cfd3e5;
+  --color-neutral-400: #b2b6ca;
+  --color-neutral-500: #9397ab;
+  --color-neutral-600: #75798c;
+  --color-neutral-700: #595d6c;
+  --color-neutral-800: #3f424d;
+  --color-neutral-900: #292b31;
+
+  --color-danger: #e08a9a;
+  --color-danger-bg: color-mix(in srgb, var(--color-danger) 16%, transparent);
+  --color-success: #7fd99a;
+  --color-success-bg: color-mix(in srgb, var(--color-success) 16%, transparent);
+
+  --gradient-body:
+    radial-gradient(ellipse 900px 500px at 12% -8%, color-mix(in srgb, var(--color-accent-900) 85%, transparent) 0%, transparent 60%),
+    radial-gradient(ellipse 700px 600px at 100% 0%, color-mix(in srgb, var(--color-royal) 55%, transparent) 0%, transparent 55%),
+    linear-gradient(180deg, var(--color-navy) 0%, var(--color-bg) 40%);
+
+  --shadow-sm: 0 0 0 1px var(--color-neutral-800);
+  --shadow-md: 0 0 0 1px var(--color-neutral-700), 0 6px 18px rgba(0, 0, 0, 0.55);
+  --shadow-lg: 0 0 0 1px var(--color-neutral-500), 0 16px 40px rgba(0, 0, 0, 0.65);
+  --shadow-glow: 0 0 0 1px color-mix(in srgb, var(--color-accent) 40%, transparent), 0 8px 30px color-mix(in srgb, var(--color-royal) 45%, transparent);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* — tema claro — aplica quando o usuário escolhe explicitamente, ou quando
+   o sistema está em modo claro e não há escolha explícita salva — */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    --color-bg: #eef1fb;
+    --color-surface: #ffffff;
+    --color-surface-2: #f7f9ff;
+    --color-text: #171a2e;
+    --color-accent: #6a5cc9;
+    --color-accent-2: #5949c0;
+    --color-divider: color-mix(in srgb, var(--color-text) 12%, transparent);
+
+    --color-neutral-100: #292b31;
+    --color-neutral-200: #3f424d;
+    --color-neutral-300: #595d6c;
+    --color-neutral-400: #6a6e82;
+    --color-neutral-500: #82869c;
+    --color-neutral-600: #a3a7bd;
+    --color-neutral-700: #cfd3e5;
+    --color-neutral-800: #e4e7f5;
+    --color-neutral-900: #f3f5fe;
+
+    --color-danger: #c0384f;
+    --color-danger-bg: color-mix(in srgb, var(--color-danger) 12%, transparent);
+    --color-success: #1f8a4c;
+    --color-success-bg: color-mix(in srgb, var(--color-success) 12%, transparent);
+
+    --gradient-body:
+      radial-gradient(ellipse 1100px 620px at 4% -14%, color-mix(in srgb, var(--color-accent-300) 90%, transparent) 0%, transparent 64%),
+      radial-gradient(ellipse 1000px 720px at 108% 6%, color-mix(in srgb, var(--color-royal-2) 62%, transparent) 0%, transparent 62%),
+      radial-gradient(ellipse 900px 600px at 50% 122%, color-mix(in srgb, var(--color-accent-200) 75%, transparent) 0%, transparent 68%),
+      linear-gradient(135deg, color-mix(in srgb, var(--color-accent-100) 55%, transparent) 0%, transparent 45%),
+      linear-gradient(180deg, #e7ecff 0%, var(--color-bg) 62%);
+
+    --shadow-sm: 0 0 0 1px var(--color-neutral-800);
+    --shadow-md: 0 0 0 1px var(--color-neutral-700), 0 6px 18px color-mix(in srgb, var(--color-navy) 12%, transparent);
+    --shadow-lg: 0 0 0 1px var(--color-neutral-600), 0 16px 40px color-mix(in srgb, var(--color-navy) 18%, transparent);
+    --shadow-glow: 0 0 0 1px color-mix(in srgb, var(--color-accent) 35%, transparent), 0 8px 30px color-mix(in srgb, var(--color-royal) 25%, transparent);
   }
 }
 
+:root[data-theme='light'] {
+  --color-bg: #eef1fb;
+  --color-surface: #ffffff;
+  --color-surface-2: #f7f9ff;
+  --color-text: #171a2e;
+  --color-accent: #6a5cc9;
+  --color-accent-2: #5949c0;
+  --color-divider: color-mix(in srgb, var(--color-text) 12%, transparent);
+
+  --color-neutral-100: #292b31;
+  --color-neutral-200: #3f424d;
+  --color-neutral-300: #595d6c;
+  --color-neutral-400: #6a6e82;
+  --color-neutral-500: #82869c;
+  --color-neutral-600: #a3a7bd;
+  --color-neutral-700: #cfd3e5;
+  --color-neutral-800: #e4e7f5;
+  --color-neutral-900: #f3f5fe;
+
+  --color-danger: #c0384f;
+  --color-danger-bg: color-mix(in srgb, var(--color-danger) 12%, transparent);
+  --color-success: #1f8a4c;
+  --color-success-bg: color-mix(in srgb, var(--color-success) 12%, transparent);
+
+  --gradient-body:
+    radial-gradient(ellipse 1100px 620px at 4% -14%, color-mix(in srgb, var(--color-accent-300) 90%, transparent) 0%, transparent 64%),
+    radial-gradient(ellipse 1000px 720px at 108% 6%, color-mix(in srgb, var(--color-royal-2) 62%, transparent) 0%, transparent 62%),
+    radial-gradient(ellipse 900px 600px at 50% 122%, color-mix(in srgb, var(--color-accent-200) 75%, transparent) 0%, transparent 68%),
+    linear-gradient(135deg, color-mix(in srgb, var(--color-accent-100) 55%, transparent) 0%, transparent 45%),
+    linear-gradient(180deg, #e7ecff 0%, var(--color-bg) 62%);
+
+  --shadow-sm: 0 0 0 1px var(--color-neutral-800);
+  --shadow-md: 0 0 0 1px var(--color-neutral-700), 0 6px 18px color-mix(in srgb, var(--color-navy) 12%, transparent);
+  --shadow-lg: 0 0 0 1px var(--color-neutral-600), 0 16px 40px color-mix(in srgb, var(--color-navy) 18%, transparent);
+  --shadow-glow: 0 0 0 1px color-mix(in srgb, var(--color-accent) 35%, transparent), 0 8px 30px color-mix(in srgb, var(--color-royal) 25%, transparent);
+}
+
+@theme inline {
+  --color-background: var(--color-bg);
+  --color-foreground: var(--color-text);
+  --font-sans: var(--font-inter);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--color-bg);
+  transition: background-color 0.25s ease;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--gradient-body);
+  background-attachment: fixed;
+  color: var(--color-text);
+  font-family: var(--font-body);
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  margin: 0;
+}
+
+a {
+  color: var(--color-accent);
+  text-underline-offset: 3px;
+  transition: color 0.15s ease;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--color-accent) 30%, transparent);
+}
+
+.adx-fade-in {
+  animation: adxFade 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes adxFade {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+.adx-page-turn {
+  animation: adxPageTurn 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes adxPageTurn {
+  from { opacity: 0; transform: translateX(10px) rotateY(4deg) scale(0.99); }
+  to { opacity: 1; transform: none; }
+}
+
+/* — buttons — */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  text-decoration: none;
+  font-family: var(--font-heading);
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 1.2;
+  color: var(--color-text);
+  background: transparent;
+  border: 1px solid transparent;
+  padding: 9px 15px;
+  border-radius: var(--radius-md);
+  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease, filter 0.2s ease;
+}
+.btn svg { display: block; flex: none; }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn:active:not(:disabled) { transform: scale(0.97); }
+.btn-primary { color: var(--color-accent); border-color: var(--color-accent); }
+.btn-primary:hover:not(:disabled) { background: color-mix(in srgb, var(--color-accent) 12%, transparent); }
+.btn-primary:active:not(:disabled) { background: color-mix(in srgb, var(--color-accent) 22%, transparent); }
+.btn-primary-solid {
+  color: #fff;
+  background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-royal-2) 100%);
+  border-color: transparent;
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--color-royal) 45%, transparent);
+}
+.btn-primary-solid:hover:not(:disabled) {
+  filter: brightness(1.08);
+  box-shadow: 0 6px 20px color-mix(in srgb, var(--color-royal) 60%, transparent);
+}
+.btn-secondary { border-color: var(--color-divider); }
+.btn-secondary:hover:not(:disabled) { background: color-mix(in srgb, var(--color-text) 7%, transparent); border-color: color-mix(in srgb, var(--color-text) 30%, transparent); }
+.btn-secondary:active:not(:disabled) { background: color-mix(in srgb, var(--color-text) 14%, transparent); }
+.btn-danger { color: var(--color-danger); border-color: color-mix(in srgb, var(--color-danger) 55%, transparent); }
+.btn-danger:hover:not(:disabled) { background: var(--color-danger-bg); }
+.btn-onbook {
+  color: var(--color-onbook-text);
+  background: var(--color-onbook-chip-bg);
+  border-color: var(--color-onbook-divider);
+}
+.btn-onbook:hover:not(:disabled) { background: rgba(15, 18, 40, 0.72); }
+.btn-onbook:active:not(:disabled) { background: rgba(15, 18, 40, 0.85); }
+.btn-ghost { color: var(--color-accent); padding-inline: 4px; border: none; }
+.btn-ghost:hover:not(:disabled) { background: color-mix(in srgb, var(--color-accent) 10%, transparent); }
+.btn-icon { width: 36px; height: 36px; padding: 0; }
+.btn-block { width: 100%; }
+
+/* — forms — */
+.field > label {
+  display: block;
+  font-size: 12px;
+  margin-bottom: 5px;
+  color: color-mix(in srgb, var(--color-text) 70%, transparent);
+  font-weight: 600;
+}
+.input {
+  width: 100%;
+  min-height: 36px;
+  padding: 8px 12px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--color-text);
+  caret-color: var(--color-accent);
+  background: var(--color-bg);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.input::placeholder { color: var(--color-neutral-600); }
+.input:hover { border-color: color-mix(in srgb, var(--color-text) 45%, transparent); }
+.input:focus { border-color: var(--color-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 20%, transparent); }
+textarea.input { min-height: 90px; resize: vertical; }
+
+.radio { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; user-select: none; }
+.radio input { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
+.radio .dot {
+  width: 15px; height: 15px; flex: none; border-radius: 50%;
+  border: 1.5px solid var(--color-divider); transition: all 0.2s ease;
+}
+.radio:hover .dot { border-color: var(--color-accent); }
+.radio input:checked + .dot {
+  border-color: var(--color-accent); background: var(--color-accent);
+  box-shadow: inset 0 0 0 4px var(--color-bg), 0 0 8px color-mix(in srgb, var(--color-accent) 60%, transparent);
+}
+
+.seg {
+  display: inline-flex;
+  overflow: hidden;
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-surface) 60%, transparent);
+}
+.seg-opt {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 14px; font-size: 13px; cursor: pointer; color: var(--color-neutral-400);
+  transition: color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+}
+.seg-opt input { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
+.seg-opt + .seg-opt { border-left: 1px solid var(--color-divider); }
+.seg-opt:first-child { border-radius: calc(var(--radius-md) - 1px) 0 0 calc(var(--radius-md) - 1px); }
+.seg-opt:last-child { border-radius: 0 calc(var(--radius-md) - 1px) calc(var(--radius-md) - 1px) 0; }
+.seg-opt.is-active {
+  color: var(--color-accent-100);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-accent) 55%, transparent), color-mix(in srgb, var(--color-royal-2) 55%, transparent));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 70%, transparent);
+}
+.seg-opt:not(.is-active):hover { background: color-mix(in srgb, var(--color-text) 7%, transparent); }
+
+/* — cards — */
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: 12px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(160deg, var(--color-surface-2) 0%, var(--color-surface) 60%);
+  transition: box-shadow 0.25s ease, transform 0.25s ease, background-color 0.25s ease;
+}
+.card-title {
+  font-family: var(--font-heading);
+  font-weight: 500;
+  font-size: 15px;
+  line-height: 1.2;
+}
+.elev-sm { box-shadow: var(--shadow-sm); }
+.elev-md { box-shadow: var(--shadow-md); }
+.elev-lg { box-shadow: var(--shadow-lg); }
+.elev-glow { box-shadow: var(--shadow-glow); }
+
+/* — tags — */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background-color 0.2s ease;
+}
+.tag-accent { background: linear-gradient(135deg, var(--color-accent-800), var(--color-royal)); color: var(--color-accent-100); }
+.tag-outline { border: 1px solid var(--color-accent); color: var(--color-accent); }
+.tag-neutral { background: var(--color-neutral-800); color: var(--color-neutral-100); }
+
+/* — navigation — */
+.nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: 12px 16px;
+}
+.nav-brand {
+  font-family: var(--font-heading);
+  font-weight: 500;
+  font-size: 15px;
+}
+
+/* — album / book — */
+.page-leaf {
+  position: relative;
+  background: linear-gradient(165deg, var(--color-onbook-leaf-2) 0%, var(--color-onbook-leaf) 70%);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+.page-leaf::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(color-mix(in srgb, var(--color-accent-300) 14%, transparent) 1px, transparent 1px);
+  background-size: 22px 22px;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.onbook-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: 12px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(160deg, var(--color-onbook-card-2) 0%, var(--color-onbook-card) 65%);
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
+}
+.page-leaf::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 26px;
+  height: 26px;
+  background: linear-gradient(135deg, transparent 50%, color-mix(in srgb, var(--color-navy) 70%, transparent) 50%);
+  border-top-left-radius: 4px;
+  opacity: 0.6;
+  pointer-events: none;
+}
+.book-spine {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 64px;
+  transform: translateX(-50%);
+  background: linear-gradient(
+    to right,
+    transparent,
+    color-mix(in srgb, var(--color-navy) 65%, transparent) 46%,
+    color-mix(in srgb, var(--color-navy) 65%, transparent) 54%,
+    transparent
+  );
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* — rule — */
+.hr {
+  height: 1px;
+  border: 0;
+  margin: 12px 0;
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--color-divider) 48px,
+    var(--color-divider) calc(100% - 48px),
+    transparent
+  );
 }

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import imageCompression from 'browser-image-compression';
-import { Camera, Upload, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Camera, CheckCircle2, AlertCircle } from 'lucide-react';
 
 interface UploadButtonProps {
   eventId: string;
@@ -106,29 +106,40 @@ export default function UploadButton({
 
   return (
     <div className="w-full">
-      <label className="relative flex flex-col items-center justify-center w-full p-6 border-2 border-dashed border-purple-300 rounded-2xl cursor-pointer bg-purple-50/50 hover:bg-purple-50 transition-colors">
-        <div className="flex flex-col items-center justify-center space-y-2 text-center">
-          {uploading ? (
-            <>
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
-              <p className="text-sm font-medium text-purple-700">{progressText}</p>
-            </>
-          ) : (
-            <>
-              <div className="p-3 bg-purple-100 rounded-full text-purple-600">
-                <Camera className="w-6 h-6" />
-              </div>
-              <div>
-                <p className="text-base font-semibold text-gray-700">
-                  Adicionar Fotos da Formatura
-                </p>
-                <p className="text-xs text-gray-500 mt-0.5">
-                  Tire na hora ou escolha da galeria (múltiplas fotos permitidas)
-                </p>
-              </div>
-            </>
-          )}
-        </div>
+      <label
+        className="relative flex flex-col items-center justify-center w-full p-6 rounded-2xl cursor-pointer transition-colors gap-2.5 text-center"
+        style={{
+          border: '1.5px dashed color-mix(in srgb, var(--color-accent) 45%, transparent)',
+          borderRadius: 'var(--radius-lg)',
+          background: 'color-mix(in srgb, var(--color-accent) 6%, var(--color-surface))',
+        }}
+      >
+        {uploading ? (
+          <>
+            <div
+              className="animate-spin rounded-full h-8 w-8"
+              style={{ borderBottom: '2px solid var(--color-accent)' }}
+            />
+            <p className="text-sm font-medium" style={{ color: 'var(--color-accent)' }}>
+              {progressText}
+            </p>
+          </>
+        ) : (
+          <>
+            <div
+              className="w-11 h-11 rounded-full flex items-center justify-center"
+              style={{ background: 'color-mix(in srgb, var(--color-accent) 18%, var(--color-surface))' }}
+            >
+              <Camera className="w-5 h-5" style={{ color: 'var(--color-accent)' }} />
+            </div>
+            <div>
+              <p className="text-sm font-medium">Adicionar Fotos da Formatura</p>
+              <p className="text-xs mt-0.5" style={{ color: 'var(--color-neutral-400)' }}>
+                Tire na hora ou escolha da galeria (múltiplas fotos permitidas)
+              </p>
+            </div>
+          </>
+        )}
 
         <input
           type="file"
@@ -140,17 +151,21 @@ export default function UploadButton({
         />
       </label>
 
-      {/* Alerta de Sucesso */}
       {success && (
-        <div className="mt-3 flex items-center space-x-2 p-3 bg-green-50 border border-green-200 rounded-xl text-green-700 text-sm animate-fade-in">
+        <div
+          className="mt-3 flex items-center gap-2 p-3 rounded-xl text-sm"
+          style={{ background: 'var(--color-success-bg)', color: 'var(--color-success)' }}
+        >
           <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
           <span>Fotos enviadas com sucesso e adicionadas ao mural!</span>
         </div>
       )}
 
-      {/* Alerta de Erro */}
       {error && (
-        <div className="mt-3 flex items-center space-x-2 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+        <div
+          className="mt-3 flex items-center gap-2 p-3 rounded-xl text-sm"
+          style={{ background: 'var(--color-danger-bg)', color: 'var(--color-danger)' }}
+        >
           <AlertCircle className="w-5 h-5 flex-shrink-0" />
           <span>{error}</span>
         </div>

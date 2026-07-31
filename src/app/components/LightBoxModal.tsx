@@ -133,7 +133,7 @@ export default function LightboxModal({
         <div className="w-full mt-4 flex items-center justify-between px-4 sm:px-6 py-3 bg-white/10 backdrop-blur-md rounded-2xl text-white border border-white/10 shadow-lg">
           <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 truncate pr-4">
             <div className="flex items-center space-x-1.5 text-sm sm:text-base font-semibold">
-              <User className="w-4 h-4 text-purple-300 flex-shrink-0" />
+              <User className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--color-accent-300)' }} />
               <span className="truncate">{currentPhoto.author_name}</span>
             </div>
 
@@ -160,7 +160,8 @@ export default function LightboxModal({
               <button
                 onClick={handleDelete}
                 disabled={deleting}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600/80 hover:bg-red-600 rounded-xl text-xs sm:text-sm font-medium transition-colors shadow-sm disabled:opacity-50"
+                className="btn btn-danger text-xs sm:text-sm"
+                style={{ background: 'color-mix(in srgb, var(--color-danger) 16%, transparent)' }}
                 title="Apagar minha foto"
               >
                 <Trash2 className="w-4 h-4" />
@@ -175,7 +176,7 @@ export default function LightboxModal({
               download
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 rounded-xl text-xs sm:text-sm font-medium transition-colors shadow-sm"
+              className="btn btn-primary-solid text-xs sm:text-sm"
               title="Baixar foto original"
             >
               <Download className="w-4 h-4" />

@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Sparkles, KeyRound, User, ShieldCheck } from 'lucide-react';
+import { ArrowRight, BookImage, ShieldCheck } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import ThemeToggle from './ThemeToggle';
 
 interface LoginModalProps {
   onLogin: (name: string, accessKey: string, eventId: string, eventName: string, iconUrl?: string) => void;
@@ -53,7 +54,6 @@ export default function LoginModal({ onLogin }: LoginModalProps) {
       localStorage.setItem('guest_name', name.trim());
       localStorage.setItem('guest_key', accessKey.trim().toUpperCase());
 
-      // Passa o iconUrl que a rota de assinatura leu da tabela events
       onLogin(name.trim(), accessKey.trim().toUpperCase(), data.eventId, data.eventName, data.iconUrl);
     } catch (err: any) {
       setError(err.message);
@@ -63,56 +63,67 @@ export default function LoginModal({ onLogin }: LoginModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 animate-fade-in">
-        {/* CABEÇALHO GENÉRICO DE EVENTOS */}
-        <div className="text-center space-y-2">
-          <div className="inline-flex p-3 bg-purple-100 text-purple-600 rounded-2xl mb-1">
-            <Sparkles className="w-8 h-8" />
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
+      style={{ background: 'rgba(8, 10, 24, 0.55)' }}
+    >
+      <div
+        className="adx-fade-in elev-lg w-full max-w-md rounded-2xl p-7 sm:p-8 flex flex-col gap-5 relative"
+        style={{ background: 'var(--color-surface)', borderRadius: 'var(--radius-lg)' }}
+      >
+        <ThemeToggle className="absolute top-4 right-4" />
+
+        <div className="flex flex-col items-center gap-3.5 text-center">
+          <div
+            className="w-14 h-14 rounded-full flex items-center justify-center"
+            style={{ background: 'linear-gradient(135deg, var(--color-accent-900), var(--color-royal))', boxShadow: '0 0 0 1px var(--color-accent-800)' }}
+          >
+            <BookImage className="w-6.5 h-6.5" style={{ color: 'var(--color-accent-200)' }} />
           </div>
-          <h2 className="text-2xl font-bold text-gray-800">Álbum Compartilhado</h2>
-          <p className="text-sm text-gray-500">
-            Identifique-se e digite a chave de acesso do seu evento para compartilhar fotos e ver a galeria!
-          </p>
+          <div>
+            <h3 className="text-lg mb-1">Álbum Compartilhado</h3>
+            <p className="text-sm" style={{ color: 'var(--color-neutral-400)' }}>
+              Identifique-se e digite a chave do evento
+            </p>
+          </div>
         </div>
 
-        <form onSubmit={handleJoin} className="space-y-4">
-          <div>
-            <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">
-              Seu Nome
-            </label>
-            <div className="relative">
-              <User className="w-5 h-5 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Ex: João Silva"
-                className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:bg-white outline-none text-sm text-gray-800 transition-all"
-              />
-            </div>
+        <p className="text-sm text-center leading-relaxed" style={{ color: 'var(--color-neutral-400)' }}>
+          Envie fotos e veja a galeria e os recados da turma.
+        </p>
+
+        <form onSubmit={handleJoin} className="flex flex-col gap-4">
+          <div className="field">
+            <label htmlFor="guest-name">Seu nome</label>
+            <input
+              id="guest-name"
+              type="text"
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Ex: Marina Alves"
+              className="input"
+            />
           </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">
-              Chave de Acesso
-            </label>
-            <div className="relative">
-              <KeyRound className="w-5 h-5 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                required
-                value={accessKey}
-                onChange={(e) => setAccessKey(e.target.value.toUpperCase())}
-                placeholder="Ex: EVENTO2026"
-                className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:bg-white outline-none text-sm uppercase font-mono text-gray-800 transition-all"
-              />
-            </div>
+          <div className="field">
+            <label htmlFor="guest-key">Chave de acesso</label>
+            <input
+              id="guest-key"
+              type="text"
+              required
+              value={accessKey}
+              onChange={(e) => setAccessKey(e.target.value.toUpperCase())}
+              placeholder="Ex: TURMA2026"
+              className="input uppercase font-mono"
+            />
           </div>
 
           {error && (
-            <p className="text-xs text-red-600 text-center font-medium bg-red-50 p-2.5 rounded-lg border border-red-100">
+            <p
+              className="text-xs text-center font-medium p-2.5 rounded-lg"
+              style={{ color: 'var(--color-danger)', background: 'var(--color-danger-bg)' }}
+            >
               {error}
             </p>
           )}
@@ -120,23 +131,24 @@ export default function LoginModal({ onLogin }: LoginModalProps) {
           <button
             type="submit"
             disabled={loading || !name.trim() || !accessKey.trim()}
-            className="w-full py-3.5 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 text-white font-semibold rounded-xl transition-colors shadow-lg shadow-purple-600/25 text-sm"
+            className="btn btn-primary-solid btn-block"
           >
             {loading ? 'Acessando...' : 'Entrar na Galeria'}
+            <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </form>
 
-        {/* ATALHO GENÉRICO PARA O ADMIN DO EVENTO */}
-        <div className="pt-3 border-t border-gray-100 text-center">
-          <button
-            type="button"
-            onClick={() => router.push('/admin')}
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-400 hover:text-purple-600 transition-colors py-1 px-2 rounded-lg"
-          >
-            <ShieldCheck className="w-3.5 h-3.5" />
-            <span>Área dos Anfitriões (Admin)</span>
-          </button>
-        </div>
+        <div className="hr" style={{ margin: '4px 0' }} />
+
+        <button
+          type="button"
+          onClick={() => router.push('/admin')}
+          className="btn btn-ghost justify-center text-xs"
+          style={{ color: 'var(--color-neutral-400)' }}
+        >
+          <ShieldCheck className="w-3.5 h-3.5" />
+          Área dos Anfitriões
+        </button>
       </div>
     </div>
   );

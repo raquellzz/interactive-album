@@ -1,12 +1,14 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Camera, MessageSquare, LogOut, GraduationCap } from 'lucide-react';
+import { Camera, MessageSquare, LogOut, GraduationCap, BookOpen } from 'lucide-react';
 import LoginModal from './components/LoginModal';
 import PhotoGrid, { Photo } from './components/PhotoGrid';
 import UploadButton from './components/UploadButton';
 import MessageBoard, { Message } from './components/MessageBoard';
 import LightboxModal from './components/LightBoxModal';
+import InteractiveAlbum from './components/InteractiveAlbum';
+import ThemeToggle from './components/ThemeToggle';
 
 export default function Home() {
   const [guestName, setGuestName] = useState<string | null>(null);
@@ -14,7 +16,7 @@ export default function Home() {
   const [eventId, setEventId] = useState<string | null>(null);
   const [eventName, setEventName] = useState<string>('Álbum de Formatura');
 
-  const [activeTab, setActiveTab] = useState<'photos' | 'messages'>('photos');
+  const [activeTab, setActiveTab] = useState<'photos' | 'messages' | 'album'>('photos');
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
@@ -22,17 +24,17 @@ export default function Home() {
   const [eventIconUrl, setEventIconUrl] = useState<string>('/icon.png');
 
   useEffect(() => {
-  if (eventId && eventIconUrl) {
-    let favicon = document.querySelector<HTMLLinkElement>("link[rel*='icon']");
-    if (!favicon) {
-      favicon = document.createElement('link');
-      favicon.rel = 'icon';
-      document.head.appendChild(favicon);
+    if (eventId && eventIconUrl) {
+      let favicon = document.querySelector<HTMLLinkElement>("link[rel*='icon']");
+      if (!favicon) {
+        favicon = document.createElement('link');
+        favicon.rel = 'icon';
+        document.head.appendChild(favicon);
+      }
+      favicon.type = 'image/png';
+      favicon.href = eventIconUrl;
     }
-    favicon.type = 'image/png';
-    favicon.href = eventIconUrl;
-  }
-}, [eventId, eventIconUrl]);
+  }, [eventId, eventIconUrl]);
 
   const fetchPhotos = useCallback(async (id: string) => {
     try {
@@ -88,37 +90,47 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 pb-16">
-      {/* Cabeçalho Comemorativo */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-xs">
+    <main className="min-h-screen pb-16">
+      {/* Cabeçalho */}
+      <header
+        className="sticky top-0 z-30 backdrop-blur-md"
+        style={{
+          borderBottom: '1px solid var(--color-divider)',
+          background: 'color-mix(in srgb, var(--color-surface) 72%, transparent)',
+        }}
+      >
         <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center space-x-2.5">
-            <div className="p-2 bg-purple-600 text-white rounded-xl shadow-sm">
-              <GraduationCap className="w-5 h-5" />
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div
+              className="w-9 h-9 rounded-full flex items-center justify-center flex-none"
+              style={{ background: 'linear-gradient(135deg, var(--color-accent-900), var(--color-royal))' }}
+            >
+              <GraduationCap className="w-4.5 h-4.5" style={{ color: 'var(--color-accent-200)' }} />
             </div>
-            <div>
-              <h1 className="font-bold text-gray-800 text-sm sm:text-base leading-tight">
-                {eventName}
-              </h1>
-              <p className="text-xs text-gray-500">
-                Olá, <span className="font-medium text-purple-600">{guestName}</span>
+            <div className="min-w-0">
+              <h1 className="text-sm sm:text-base leading-tight truncate">{eventName}</h1>
+              <p className="text-xs truncate" style={{ color: 'var(--color-neutral-400)' }}>
+                Olá, <span className="font-medium" style={{ color: 'var(--color-accent)' }}>{guestName}</span>
               </p>
             </div>
           </div>
 
-          <button
-            onClick={handleLogout}
-            title="Sair / Trocar nome"
-            className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
-          >
-            <LogOut className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <button
+              onClick={handleLogout}
+              title="Sair / Trocar nome"
+              className="btn btn-secondary btn-icon"
+              aria-label="Sair"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </header>
 
       {/* Container Principal */}
-      <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
-        {/* Botão de Upload Sempre em Destaque */}
+      <div className="max-w-5xl mx-auto px-4 py-6 flex flex-col gap-6">
         <UploadButton
           eventId={eventId}
           accessKey={accessKey}
@@ -126,51 +138,50 @@ export default function Home() {
           onUploadSuccess={() => fetchPhotos(eventId)}
         />
 
-        {/* Abas (Galeria de Fotos vs Recados) */}
-        <div className="flex border-b border-gray-200">
-          <button
-            onClick={() => setActiveTab('photos')}
-            className={`flex items-center gap-2 pb-3 px-4 text-sm font-semibold border-b-2 transition-colors ${
-              activeTab === 'photos'
-                ? 'border-purple-600 text-purple-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            <Camera className="w-4 h-4" />
+        {/* Tabs segmentadas */}
+        <div className="seg w-fit max-w-full overflow-x-auto">
+          <label className={`seg-opt whitespace-nowrap ${activeTab === 'photos' ? 'is-active' : ''}`}>
+            <input type="radio" name="adx-tab" checked={activeTab === 'photos'} onChange={() => setActiveTab('photos')} />
+            <Camera className="w-3.5 h-3.5" />
             Galeria de Fotos ({photos.length})
-          </button>
-
-          <button
-            onClick={() => setActiveTab('messages')}
-            className={`flex items-center gap-2 pb-3 px-4 text-sm font-semibold border-b-2 transition-colors ${
-              activeTab === 'messages'
-                ? 'border-purple-600 text-purple-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            <MessageSquare className="w-4 h-4" />
+          </label>
+          <label className={`seg-opt whitespace-nowrap ${activeTab === 'messages' ? 'is-active' : ''}`}>
+            <input type="radio" name="adx-tab" checked={activeTab === 'messages'} onChange={() => setActiveTab('messages')} />
+            <MessageSquare className="w-3.5 h-3.5" />
             Recados ({messages.length})
-          </button>
+          </label>
+          <label className={`seg-opt whitespace-nowrap ${activeTab === 'album' ? 'is-active' : ''}`}>
+            <input type="radio" name="adx-tab" checked={activeTab === 'album'} onChange={() => setActiveTab('album')} />
+            <BookOpen className="w-3.5 h-3.5" />
+            Álbum Digital
+          </label>
         </div>
 
         {/* Conteúdo da Aba Ativa */}
-        {activeTab === 'photos' ? (
-          <PhotoGrid 
-            photos={photos} 
-            loading={loading} 
-            onPhotoClick={(index) => setSelectedPhotoIndex(index)} 
-          />
-        ) : (
-          <MessageBoard
-            eventId={eventId}
-            authorName={guestName}
-            messages={messages}
-            loading={loading}
-            onMessageSent={() => fetchMessages(eventId)}
-          />
-        )}
+        <div key={activeTab} className="adx-fade-in">
+          {activeTab === 'photos' ? (
+            <PhotoGrid
+              photos={photos}
+              loading={loading}
+              onPhotoClick={(index) => setSelectedPhotoIndex(index)}
+            />
+          ) : activeTab === 'messages' ? (
+            <MessageBoard
+              eventId={eventId}
+              authorName={guestName}
+              messages={messages}
+              loading={loading}
+              onMessageSent={() => fetchMessages(eventId)}
+            />
+          ) : (
+            <InteractiveAlbum
+              eventName={eventName}
+              photos={photos}
+              messages={messages}
+            />
+          )}
+        </div>
 
-        {/* Modal de Lightbox - Só é montado quando uma foto é clicada */}
         {selectedPhotoIndex !== null && guestName && (
           <LightboxModal
             photos={photos}

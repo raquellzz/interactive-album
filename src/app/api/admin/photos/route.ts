@@ -8,11 +8,10 @@ export async function DELETE(request: Request) {
   try {
     const cookieStore = await cookies();
     const adminSession = cookieStore.get('admin_session')?.value;
-
-    const validToken = getAdminToken();
+    const adminEventId = cookieStore.get('admin_event_id')?.value;
 
     // Compara o cookie com o token HMAC em vez da senha original
-    if (!adminSession || adminSession !== validToken) {
+    if (!adminSession || !adminEventId || adminSession !== getAdminToken(adminEventId)) {
       return NextResponse.json({ error: 'Acesso negado' }, { status: 403 });
     }
 

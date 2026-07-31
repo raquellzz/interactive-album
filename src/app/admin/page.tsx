@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Lock, LogOut, Trash2, ShieldCheck, MessageSquare, Camera, Eye, EyeOff, KeyRound } from 'lucide-react';
+import { Lock, LogOut, Trash2, ShieldCheck, MessageSquare, Camera, Eye, ChevronLeft } from 'lucide-react';
 import { Photo } from '../components/PhotoGrid';
 import { Message } from '../components/MessageBoard';
+import ThemeToggle from '../components/ThemeToggle';
 import { useRouter } from 'next/navigation';
 
 export default function AdminPage() {
@@ -97,7 +98,7 @@ export default function AdminPage() {
       const res = await fetch('/api/admin/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ accessKey, password }), 
+        body: JSON.stringify({ accessKey, password }),
       });
 
       if (res.ok) {
@@ -136,216 +137,214 @@ export default function AdminPage() {
 
   if (!isAuthenticated) {
     return (
-      
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
-        
-        <form onSubmit={handleLogin} className="max-w-sm w-full bg-gray-800 p-8 rounded-3xl border border-gray-700 shadow-2xl space-y-6">
-          <div className="text-center space-y-2">
-            <div className="inline-flex p-3 bg-purple-500/20 text-purple-400 rounded-2xl mb-1">
-              <Lock className="w-7 h-7" />
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <form
+          onSubmit={handleLogin}
+          className="adx-fade-in elev-lg max-w-sm w-full p-7 sm:p-8 flex flex-col gap-5 relative"
+          style={{ background: 'var(--color-surface)', borderRadius: 'var(--radius-lg)' }}
+        >
+          <ThemeToggle className="absolute top-4 right-4" />
+
+          <div className="flex flex-col items-center gap-3 text-center">
+            <div
+              className="w-13 h-13 rounded-full flex items-center justify-center"
+              style={{ background: 'linear-gradient(135deg, var(--color-accent-900), var(--color-royal))' }}
+            >
+              <Lock className="w-5.5 h-5.5" style={{ color: 'var(--color-accent-200)' }} />
             </div>
-            <h1 className="text-xl font-bold text-white">Acesso Restrito - Formanda</h1>
-            <p className="text-xs text-gray-400">Digite a senha de ADMIN configurada no ambiente</p>
+            <div>
+              <h1 className="text-lg mb-1">Acesso restrito — anfitrião</h1>
+              <p className="text-xs" style={{ color: 'var(--color-neutral-400)' }}>
+                Digite a chave do evento e a senha de moderação
+              </p>
+            </div>
           </div>
-          <div>
-            <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
-              Chave do Evento
-            </label>
+
+          <div className="field">
+            <label htmlFor="admin-key">Chave do evento</label>
             <input
+              id="admin-key"
               type="text"
               placeholder="Ex: RAQUEL2026"
               value={accessKey}
               onChange={(e) => setAccessKey(e.target.value.toUpperCase())}
-              className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl text-white text-sm focus:ring-2 focus:ring-purple-500 uppercase font-mono outline-none"
+              className="input uppercase font-mono"
               required
             />
           </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-gray-400 tracking-wider mb-1 mt-3">
-              Senha do Anfitrião
-            </label>
+          <div className="field">
+            <label htmlFor="admin-pass">Senha do anfitrião</label>
             <input
+              id="admin-pass"
               type="password"
               placeholder="Senha de moderação..."
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl text-white text-sm focus:ring-2 focus:ring-purple-500 outline-none"
+              className="input"
               required
             />
           </div>
 
           {loginError && (
-            <p className="text-xs text-red-400 text-center font-medium bg-red-950/40 p-2.5 rounded-lg border border-red-900/50">
+            <p
+              className="text-xs text-center font-medium p-2.5 rounded-lg"
+              style={{ color: 'var(--color-danger)', background: 'var(--color-danger-bg)' }}
+            >
               {loginError}
             </p>
           )}
 
-          <button
-            type="submit"
-            className="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-xl text-sm transition-colors shadow-lg shadow-purple-600/20"
-          >
-            Acessar Painel
+          <button type="submit" className="btn btn-primary-solid btn-block">
+            Acessar painel
           </button>
-          {/* Adicione no topo ou rodapé do form de login do admin */}
-          <div className="text-center pt-2">
-            <button
-              type="button"
-              onClick={() => router.push('/')}
-              className="text-xs text-purple-400 hover:text-purple-300 underline underline-offset-4"
-            >
-              ← Voltar para a Galeria de Convidados
-            </button>
-          </div>
+
+          <button
+            type="button"
+            onClick={() => router.push('/')}
+            className="btn btn-ghost justify-center text-xs"
+            style={{ color: 'var(--color-neutral-400)' }}
+          >
+            <ChevronLeft className="w-3.5 h-3.5" />
+            Voltar para a galeria de convidados
+          </button>
         </form>
-        
       </div>
     );
   }
 
   return (
-    <main className="min-h-screen bg-gray-100 pb-16">
-      <header className="bg-gray-900 text-white sticky top-0 z-30 shadow-md">
-        <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <ShieldCheck className="w-5 h-5 text-purple-400" />
-            <h1 className="font-bold text-sm sm:text-base">Painel de Moderação — Raquel</h1>
+    <main className="min-h-screen pb-16">
+      <nav
+        className="nav sticky top-0 z-30"
+        style={{
+          background: 'color-mix(in srgb, var(--color-surface) 75%, transparent)',
+          borderBottom: '1px solid var(--color-divider)',
+        }}
+      >
+        <div className="max-w-5xl mx-auto w-full px-2 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="w-4.5 h-4.5" style={{ color: 'var(--color-accent)' }} />
+            <span className="nav-brand">Painel de moderação — Raquel</span>
           </div>
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-2 text-xs bg-gray-800 hover:bg-gray-700 px-3 py-1.5 rounded-lg text-gray-300 hover:text-white transition-colors"
-          >
-            <LogOut className="w-4 h-4" />
-            Sair
-          </button>
-        </div>
-      </header>
-      {/* CARD DE CONTROLE DO EVENTO ATUAL */}
-      <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between mb-6">
-        <div className="flex items-center space-x-3">
-          <div className="w-12 h-12 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center overflow-hidden flex-shrink-0">
-            {uploadingIcon ? (
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-purple-600"></div>
-            ) : (
-              <img src={eventIcon} alt="Ícone Atual" className="w-8 h-8 object-contain" />
-            )}
-          </div>
-          <div>
-            <h3 className="font-bold text-gray-800 text-sm">Ícone do Navegador (Favicon)</h3>
-            <p className="text-xs text-gray-500">
-              Personalize a imagem que aparece na aba para os seus convidados
-            </p>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <button onClick={handleLogout} className="btn btn-secondary">
+              <LogOut className="w-3.5 h-3.5" />
+              Sair
+            </button>
           </div>
         </div>
+      </nav>
 
-        <label className="cursor-pointer px-4 py-2 bg-purple-100 hover:bg-purple-200 text-purple-700 text-xs font-semibold rounded-xl transition-colors flex items-center gap-1.5 shadow-xs">
-          <span>{uploadingIcon ? 'Enviando...' : 'Trocar Ícone (PNG)'}</span>
-          <input
-            type="file"
-            accept="image/png,image/jpeg,image/webp"
-            disabled={uploadingIcon}
-            onChange={handleIconChange}
-            className="hidden"
-          />
-        </label>
-      </div>
+      <div className="max-w-5xl mx-auto px-4 py-6 flex flex-col gap-6">
+        {/* CARD DE CONTROLE DO EVENTO ATUAL */}
+        <div className="card elev-sm flex-row items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-3">
+            <div
+              className="w-10 h-10 rounded-lg flex items-center justify-center overflow-hidden flex-none"
+              style={{ background: 'var(--color-accent-900)', borderRadius: 'var(--radius-md)' }}
+            >
+              {uploadingIcon ? (
+                <div className="animate-spin rounded-full h-5 w-5" style={{ borderBottom: '2px solid var(--color-accent)' }} />
+              ) : (
+                <img src={eventIcon} alt="Ícone Atual" className="w-6 h-6 object-contain" />
+              )}
+            </div>
+            <div>
+              <div className="text-sm font-medium">Ícone do navegador</div>
+              <div className="text-xs" style={{ color: 'var(--color-neutral-500)' }}>
+                Personalize o favicon exibido para os convidados
+              </div>
+            </div>
+          </div>
 
-      <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
+          <label className="btn btn-primary-solid" style={{ cursor: uploadingIcon ? 'not-allowed' : 'pointer' }}>
+            <span>{uploadingIcon ? 'Enviando...' : 'Trocar ícone (PNG)'}</span>
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              disabled={uploadingIcon}
+              onChange={handleIconChange}
+              className="hidden"
+            />
+          </label>
+        </div>
+
         {/* Abas */}
-        <div className="flex border-b border-gray-300">
-          <button
-            onClick={() => setActiveTab('photos')}
-            className={`flex items-center gap-2 pb-3 px-4 text-sm font-semibold border-b-2 transition-colors ${
-              activeTab === 'photos'
-                ? 'border-purple-600 text-purple-600'
-                : 'border-transparent text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            <Camera className="w-4 h-4" />
-            Todas as Fotos ({photos.length})
-          </button>
-
-          <button
-            onClick={() => setActiveTab('messages')}
-            className={`flex items-center gap-2 pb-3 px-4 text-sm font-semibold border-b-2 transition-colors ${
-              activeTab === 'messages'
-                ? 'border-purple-600 text-purple-600'
-                : 'border-transparent text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            <MessageSquare className="w-4 h-4" />
-            Recados (Públicos e Privados) ({messages.length})
-          </button>
+        <div className="seg w-fit max-w-full overflow-x-auto">
+          <label className={`seg-opt whitespace-nowrap ${activeTab === 'photos' ? 'is-active' : ''}`}>
+            <input type="radio" name="admin-tab" checked={activeTab === 'photos'} onChange={() => setActiveTab('photos')} />
+            <Camera className="w-3.5 h-3.5" />
+            Todas as fotos ({photos.length})
+          </label>
+          <label className={`seg-opt whitespace-nowrap ${activeTab === 'messages' ? 'is-active' : ''}`}>
+            <input type="radio" name="admin-tab" checked={activeTab === 'messages'} onChange={() => setActiveTab('messages')} />
+            <MessageSquare className="w-3.5 h-3.5" />
+            Recados públicos e privados ({messages.length})
+          </label>
         </div>
 
         {loading ? (
           <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
-          </div>
-        ) : activeTab === 'photos' ? (
-          /* MURAL ADMIN DE FOTOS */
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {photos.map((photo) => (
-              <div key={photo.id} className="relative bg-white p-2 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between">
-                <div>
-                  <img
-                    src={photo.image_url}
-                    alt=""
-                    className="w-full aspect-square object-cover rounded-lg mb-2"
-                  />
-                  <p className="text-xs font-semibold text-gray-800 truncate px-1">
-                    Por: {photo.author_name}
-                  </p>
-                  <p className="text-[10px] text-gray-400 px-1 mb-2">
-                    {new Date(photo.created_at).toLocaleString('pt-BR')}
-                  </p>
-                </div>
-                <button
-                  onClick={() => handleDeletePhoto(photo.id)}
-                  className="w-full flex items-center justify-center gap-1.5 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-medium rounded-lg transition-colors border border-red-200"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  Apagar
-                </button>
-              </div>
-            ))}
+            <div className="animate-spin rounded-full h-8 w-8" style={{ borderBottom: '2px solid var(--color-accent)' }} />
           </div>
         ) : (
-          /* MURAL ADMIN DE MENSAGENS */
-          <div className="space-y-3">
-            {messages.map((msg) => (
-              <div
-                key={msg.id}
-                className={`p-4 rounded-2xl border ${
-                  !msg.is_public
-                    ? 'bg-purple-50/70 border-purple-200 shadow-sm'
-                    : 'bg-white border-gray-200'
-                }`}
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-gray-800 text-sm">
-                      {msg.author_name}
-                    </span>
-                    {!msg.is_public ? (
-                      <span className="inline-flex items-center gap-1 bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full text-[11px] font-medium">
-                        <Lock className="w-3 h-3" />
-                        Privada para você
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full text-[11px]">
-                        <Eye className="w-3 h-3" />
-                        Pública
-                      </span>
-                    )}
+          <div key={activeTab} className="adx-fade-in">
+            {activeTab === 'photos' ? (
+              /* MURAL ADMIN DE FOTOS */
+              <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))' }}>
+                {photos.map((photo) => (
+                  <div key={photo.id} className="card elev-sm p-0 overflow-hidden gap-0" style={{ transition: 'transform 0.2s ease, box-shadow 0.2s ease' }}>
+                    <img
+                      src={photo.image_url}
+                      alt=""
+                      className="w-full aspect-square object-cover"
+                    />
+                    <div className="p-2.5 flex flex-col gap-2">
+                      <div>
+                        <p className="text-xs font-semibold truncate">Por: {photo.author_name}</p>
+                        <p className="text-[11px]" style={{ color: 'var(--color-neutral-500)' }}>
+                          {new Date(photo.created_at).toLocaleString('pt-BR')}
+                        </p>
+                      </div>
+                      <button onClick={() => handleDeletePhoto(photo.id)} className="btn btn-danger btn-block text-xs">
+                        <Trash2 className="w-3.5 h-3.5" />
+                        Apagar
+                      </button>
+                    </div>
                   </div>
-                  <span className="text-xs text-gray-400">
-                    {new Date(msg.created_at).toLocaleString('pt-BR')}
-                  </span>
-                </div>
-                <p className="text-sm text-gray-700 whitespace-pre-wrap">{msg.content}</p>
+                ))}
               </div>
-            ))}
+            ) : (
+              /* MURAL ADMIN DE MENSAGENS */
+              <div className="flex flex-col gap-2.5">
+                {messages.map((msg) => (
+                  <div key={msg.id} className="card elev-sm">
+                    <div className="flex items-center justify-between flex-wrap gap-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold">{msg.author_name}</span>
+                        {!msg.is_public ? (
+                          <span className="tag" style={{ background: 'var(--color-accent-800)', color: 'var(--color-accent-100)' }}>
+                            <Lock className="w-3 h-3 mr-1" />
+                            Privada para você
+                          </span>
+                        ) : (
+                          <span className="tag tag-neutral">
+                            <Eye className="w-3 h-3 mr-1" />
+                            Pública
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-xs" style={{ color: 'var(--color-neutral-500)' }}>
+                        {new Date(msg.created_at).toLocaleString('pt-BR')}
+                      </span>
+                    </div>
+                    <p className="text-sm whitespace-pre-wrap opacity-90">{msg.content}</p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
