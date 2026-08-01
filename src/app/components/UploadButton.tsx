@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import imageCompression from 'browser-image-compression';
-import { Camera, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Camera, Images, CheckCircle2, AlertCircle } from 'lucide-react';
 
 interface UploadButtonProps {
   eventId: string;
@@ -106,8 +106,8 @@ export default function UploadButton({
 
   return (
     <div className="w-full">
-      <label
-        className="relative flex flex-col items-center justify-center w-full p-6 rounded-2xl cursor-pointer transition-colors gap-2.5 text-center"
+      <div
+        className="relative flex flex-col items-center justify-center w-full p-6 rounded-2xl transition-colors gap-2.5 text-center"
         style={{
           border: '1.5px dashed color-mix(in srgb, var(--color-accent) 45%, transparent)',
           borderRadius: 'var(--radius-lg)',
@@ -138,18 +138,37 @@ export default function UploadButton({
                 Tire na hora ou escolha da galeria (múltiplas fotos permitidas)
               </p>
             </div>
+
+            <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+              <label className="btn btn-primary-solid" style={{ cursor: 'pointer' }}>
+                <Camera className="w-3.5 h-3.5" />
+                Tirar Foto
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  disabled={uploading}
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+              </label>
+
+              <label className="btn btn-secondary" style={{ cursor: 'pointer' }}>
+                <Images className="w-3.5 h-3.5" />
+                Escolher da Galeria
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  disabled={uploading}
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+              </label>
+            </div>
           </>
         )}
-
-        <input
-          type="file"
-          accept="image/*"
-          multiple
-          disabled={uploading}
-          onChange={handleFileChange}
-          className="hidden"
-        />
-      </label>
+      </div>
 
       {success && (
         <div

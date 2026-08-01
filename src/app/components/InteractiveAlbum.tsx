@@ -13,8 +13,14 @@ interface InteractiveAlbumProps {
 
 type PageType =
   | { type: 'cover' }
-  | { type: 'photos'; items: Photo[]; pageNum: number }
+  | { type: 'photos'; leftRows: Photo[][]; rightRows: Photo[][] }
   | { type: 'messages'; items: Message[]; pageNum: number };
+
+function chunk<T>(items: T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
+  return out;
+}
 
 // Subcomponente para Mensagem com "Ver mais..." para não estourar a página do livro
 function MessageCard({ msg }: { msg: Message }) {
@@ -61,18 +67,63 @@ function MessageCard({ msg }: { msg: Message }) {
   );
 }
 
-function PhotoLeafCard({ photo, getOptimizedUrl }: { photo: Photo; getOptimizedUrl: (url: string, w?: number) => string }) {
+type PhotoOrientation = 'portrait' | 'landscape';
+
+// Agrupa fotos em linhas: verticais (mesmo que não estejam lado a lado no
+// pedido original) são pareadas duas a duas; horizontais sempre ficam
+// sozinhas ocupando a linha inteira.
+function buildPhotoRows(items: Photo[], orientations: Record<string, PhotoOrientation>): Photo[][] {
+  const portraits: Photo[] = [];
+  const landscapes: Photo[] = [];
+
+  for (const photo of items) {
+    const orientation = orientations[photo.id] ?? 'portrait';
+    (orientation === 'landscape' ? landscapes : portraits).push(photo);
+  }
+
+  const rows: Photo[][] = [];
+  for (let i = 0; i < portraits.length; i += 2) {
+    rows.push(portraits.slice(i, i + 2));
+  }
+  for (const photo of landscapes) {
+    rows.push([photo]);
+  }
+
+  return rows;
+}
+
+function PhotoLeafCard({
+  photo,
+  getOptimizedUrl,
+  isFullscreen,
+  onOrientation,
+}: {
+  photo: Photo;
+  getOptimizedUrl: (url: string, w?: number) => string;
+  isFullscreen: boolean;
+  onOrientation: (id: string, orientation: PhotoOrientation) => void;
+}) {
   return (
-    <div className="onbook-card elev-sm p-3 sm:p-4">
+    <div className={`onbook-card elev-sm p-3 sm:p-4 h-full ${isFullscreen ? 'flex flex-col min-h-0' : ''}`}>
       <div
-        className="flex items-center justify-center rounded-lg overflow-hidden min-h-[140px] max-h-[240px] md:max-h-[300px]"
+        className={`flex items-center justify-center rounded-lg overflow-hidden ${
+          isFullscreen ? 'flex-1 min-h-0' : 'min-h-[110px] max-h-[240px] md:max-h-[300px]'
+        }`}
         style={{ background: 'var(--color-navy)' }}
       >
         <img
-          src={getOptimizedUrl(photo.image_url, 1000)}
+          src={getOptimizedUrl(photo.image_url, 1400)}
           alt={`Registro de ${photo.author_name}`}
-          className="w-auto h-auto max-w-full max-h-[240px] md:max-h-[300px] object-contain rounded select-none"
+          className={
+            isFullscreen
+              ? 'w-full h-full object-contain rounded select-none'
+              : 'w-auto h-auto max-w-full max-h-[240px] md:max-h-[300px] object-contain rounded select-none'
+          }
           loading="lazy"
+          onLoad={(e) => {
+            const img = e.currentTarget;
+            onOrientation(photo.id, img.naturalHeight > img.naturalWidth ? 'portrait' : 'landscape');
+          }}
         />
       </div>
 
@@ -102,7 +153,12 @@ function PhotoLeafCard({ photo, getOptimizedUrl }: { photo: Photo; getOptimizedU
 export default function InteractiveAlbum({ eventName, photos, messages }: InteractiveAlbumProps) {
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [orientations, setOrientations] = useState<Record<string, PhotoOrientation>>({});
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const handleOrientation = useCallback((id: string, orientation: PhotoOrientation) => {
+    setOrientations((prev) => (prev[id] === orientation ? prev : { ...prev, [id]: orientation }));
+  }, []);
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -125,16 +181,21 @@ export default function InteractiveAlbum({ eventName, photos, messages }: Intera
     return url.replace('/upload/', `/upload/f_auto,q_auto,w_${width},c_limit/`);
   };
 
-  // DIAGRAMAÇÃO: 4 fotos por folha e 4 recados por folha (2 por lado da página)
+  // DIAGRAMAÇÃO: verticais são pareadas lado a lado, horizontais ficam sozinhas
+  // ocupando a largura da folha. No máximo 2 linhas por folha — o que não
+  // couber "vira a página" e segue para a próxima folha, como num álbum real.
+  const ROWS_PER_LEAF = 2;
+
   const pages = useMemo<PageType[]>(() => {
     const list: PageType[] = [{ type: 'cover' }];
 
-    const PHOTOS_PER_PAGE = 4;
-    for (let i = 0; i < photos.length; i += PHOTOS_PER_PAGE) {
+    const photoRows = buildPhotoRows(photos, orientations);
+    const leaves = chunk(photoRows, ROWS_PER_LEAF);
+    for (let i = 0; i < leaves.length; i += 2) {
       list.push({
         type: 'photos',
-        items: photos.slice(i, i + PHOTOS_PER_PAGE),
-        pageNum: list.length,
+        leftRows: leaves[i] ?? [],
+        rightRows: leaves[i + 1] ?? [],
       });
     }
 
@@ -148,7 +209,11 @@ export default function InteractiveAlbum({ eventName, photos, messages }: Intera
     }
 
     return list;
-  }, [photos, messages]);
+  }, [photos, messages, orientations]);
+
+  useEffect(() => {
+    setCurrentPage((prev) => Math.min(prev, pages.length - 1));
+  }, [pages.length]);
 
   const handlePrev = useCallback(() => {
     setCurrentPage((prev) => Math.max(0, prev - 1));
@@ -170,8 +235,9 @@ export default function InteractiveAlbum({ eventName, photos, messages }: Intera
   const currentPageData = pages[currentPage];
   const isOpenBook = currentPageData.type !== 'cover';
 
-  const photosLeft = currentPageData.type === 'photos' ? currentPageData.items.slice(0, 2) : [];
-  const photosRight = currentPageData.type === 'photos' ? currentPageData.items.slice(2, 4) : [];
+  const photosLeftRows = currentPageData.type === 'photos' ? currentPageData.leftRows : [];
+  const photosRightRows = currentPageData.type === 'photos' ? currentPageData.rightRows : [];
+  const photosInSpread = [...photosLeftRows, ...photosRightRows].reduce((sum, row) => sum + row.length, 0);
   const messagesLeft = currentPageData.type === 'messages' ? currentPageData.items.slice(0, 2) : [];
   const messagesRight = currentPageData.type === 'messages' ? currentPageData.items.slice(2, 4) : [];
 
@@ -216,7 +282,7 @@ export default function InteractiveAlbum({ eventName, photos, messages }: Intera
         )}
 
         {/* CONTEÚDO DINÂMICO DA FOLHA */}
-        <div key={currentPage} className="adx-page-turn relative z-10 flex-1 flex flex-col">
+        <div key={currentPage} className="adx-page-turn relative z-10 flex-1 flex flex-col min-h-0">
 
           {/* == PÁGINA 1: CAPA == */}
           {currentPageData.type === 'cover' && (
@@ -263,23 +329,61 @@ export default function InteractiveAlbum({ eventName, photos, messages }: Intera
 
           {/* == PÁGINAS DE FOTOS (LIVRO ABERTO: FOLHA ESQUERDA + DIREITA) == */}
           {currentPageData.type === 'photos' && (
-            <div className="flex-1 flex flex-col justify-between">
+            <div className="flex-1 flex flex-col justify-between min-h-0">
               <div className="flex items-center justify-between pb-3 mb-4 sm:mb-6">
                 <h3 className="text-xs sm:text-sm uppercase tracking-wider" style={{ color: 'var(--color-accent-300)' }}>
                   Galeria do evento — Folha {currentPage}
                 </h3>
-                <span className="tag tag-accent">{currentPageData.items.length} fotos nesta folha</span>
+                <span className="tag tag-accent">{photosInSpread} fotos nesta folha</span>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-14 flex-1 my-auto items-start relative">
-                <div className="page-leaf p-4 sm:p-5 flex flex-col gap-4 w-full">
-                  {photosLeft.map((photo) => (
-                    <PhotoLeafCard key={photo.id} photo={photo} getOptimizedUrl={getOptimizedUrl} />
+              <div
+                className={`grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-14 flex-1 my-auto relative min-h-0 ${
+                  isFullscreen ? 'items-stretch' : 'items-start'
+                }`}
+              >
+                <div
+                  className={`page-leaf p-4 sm:p-5 w-full flex flex-col gap-4 min-h-0 ${isFullscreen ? 'h-full' : ''}`}
+                >
+                  {photosLeftRows.map((row) => (
+                    <div
+                      key={row.map((p) => p.id).join('-')}
+                      className={`${row.length === 2 ? 'grid grid-cols-2 gap-4' : ''} ${
+                        isFullscreen ? 'flex-1 min-h-0' : ''
+                      }`}
+                    >
+                      {row.map((photo) => (
+                        <PhotoLeafCard
+                          key={photo.id}
+                          photo={photo}
+                          getOptimizedUrl={getOptimizedUrl}
+                          isFullscreen={isFullscreen}
+                          onOrientation={handleOrientation}
+                        />
+                      ))}
+                    </div>
                   ))}
                 </div>
-                <div className="page-leaf p-4 sm:p-5 flex flex-col gap-4 w-full">
-                  {photosRight.map((photo) => (
-                    <PhotoLeafCard key={photo.id} photo={photo} getOptimizedUrl={getOptimizedUrl} />
+                <div
+                  className={`page-leaf p-4 sm:p-5 w-full flex flex-col gap-4 min-h-0 ${isFullscreen ? 'h-full' : ''}`}
+                >
+                  {photosRightRows.map((row) => (
+                    <div
+                      key={row.map((p) => p.id).join('-')}
+                      className={`${row.length === 2 ? 'grid grid-cols-2 gap-4' : ''} ${
+                        isFullscreen ? 'flex-1 min-h-0' : ''
+                      }`}
+                    >
+                      {row.map((photo) => (
+                        <PhotoLeafCard
+                          key={photo.id}
+                          photo={photo}
+                          getOptimizedUrl={getOptimizedUrl}
+                          isFullscreen={isFullscreen}
+                          onOrientation={handleOrientation}
+                        />
+                      ))}
+                    </div>
                   ))}
                 </div>
               </div>
@@ -288,7 +392,7 @@ export default function InteractiveAlbum({ eventName, photos, messages }: Intera
 
           {/* == PÁGINAS DE MENSAGENS (ESQUERDA + DIREITA) == */}
           {currentPageData.type === 'messages' && (
-            <div className="flex-1 flex flex-col justify-between">
+            <div className="flex-1 flex flex-col justify-between min-h-0">
               <div className="flex items-center justify-between pb-3 mb-6">
                 <h3 className="text-xs sm:text-sm uppercase tracking-wider flex items-center gap-1.5" style={{ color: 'var(--color-accent-300)' }}>
                   <MessageSquare className="w-4 h-4" />
@@ -297,13 +401,17 @@ export default function InteractiveAlbum({ eventName, photos, messages }: Intera
                 <span className="tag tag-accent">Dedicatórias</span>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-14 flex-1 my-auto items-start relative">
-                <div className="page-leaf p-4 sm:p-5 flex flex-col gap-4 w-full">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-14 flex-1 my-auto items-start relative min-h-0">
+                <div
+                  className="page-leaf p-4 sm:p-5 flex flex-col gap-4 w-full min-h-0"
+                >
                   {messagesLeft.map((msg) => (
                     <MessageCard key={msg.id} msg={msg} />
                   ))}
                 </div>
-                <div className="page-leaf p-4 sm:p-5 flex flex-col gap-4 w-full">
+                <div
+                  className="page-leaf p-4 sm:p-5 flex flex-col gap-4 w-full min-h-0"
+                >
                   {messagesRight.map((msg) => (
                     <MessageCard key={msg.id} msg={msg} />
                   ))}
