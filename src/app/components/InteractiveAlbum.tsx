@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
-import { ChevronLeft, ChevronRight, User, MessageSquare, Sparkles, Maximize2, Minimize2, FileDown, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, User, MessageSquare, BookImage, Maximize2, Minimize2, FileDown, Loader2 } from 'lucide-react';
 import { Photo } from './PhotoGrid';
 import { Message } from './MessageBoard';
 
@@ -436,7 +436,7 @@ export default function InteractiveAlbum({ eventName, photos, messages }: Intera
                 className="w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center"
                 style={{ background: 'linear-gradient(135deg, var(--color-accent-800), var(--color-royal-2))', boxShadow: 'var(--shadow-glow)' }}
               >
-                <Sparkles className="w-6 h-6 sm:w-7 sm:h-7" style={{ color: 'var(--color-accent-100)' }} />
+                <BookImage className="w-6 h-6 sm:w-7 sm:h-7" style={{ color: 'var(--color-accent-100)' }} />
               </div>
 
               <div className="flex flex-col gap-1.5">

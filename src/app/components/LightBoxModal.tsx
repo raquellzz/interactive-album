@@ -3,6 +3,7 @@
 import React, { useEffect, useCallback, useState } from 'react';
 import { X, ChevronLeft, ChevronRight, Download, User, Calendar, Trash2 } from 'lucide-react';
 import { Photo } from './PhotoGrid';
+import ConfirmModal from './ConfirmModal';
 
 interface LightboxModalProps {
   photos: Photo[];
@@ -22,15 +23,14 @@ export default function LightboxModal({
   onDeleteSuccess,
 }: LightboxModalProps) {
   const [deleting, setDeleting] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const currentPhoto = photos[currentIndex];
 
   const isOwner = currentPhoto?.author_name.trim().toLowerCase() === currentUser.trim().toLowerCase();
 
   const handleDelete = async () => {
     if (!currentPhoto || deleting) return;
-    
-    const confirmar = window.confirm('Tem certeza que deseja apagar esta foto do álbum?');
-    if (!confirmar) return;
+    setConfirmOpen(false);
 
     setDeleting(true);
     try {
@@ -158,7 +158,7 @@ export default function LightboxModal({
             {/* BOTÃO APAGAR (Só aparece para quem enviou a foto!) */}
             {isOwner && (
               <button
-                onClick={handleDelete}
+                onClick={() => setConfirmOpen(true)}
                 disabled={deleting}
                 className="btn btn-danger text-xs sm:text-sm"
                 style={{ background: 'color-mix(in srgb, var(--color-danger) 16%, transparent)' }}
@@ -185,6 +185,14 @@ export default function LightboxModal({
           </div>
         </div>
       </div>
+
+      <ConfirmModal
+        open={confirmOpen}
+        title="Apagar foto"
+        description="Tem certeza que deseja apagar esta foto do álbum? Essa ação não pode ser desfeita."
+        onConfirm={handleDelete}
+        onCancel={() => setConfirmOpen(false)}
+      />
     </div>
   );
 }
