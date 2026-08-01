@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
-import { ChevronLeft, ChevronRight, User, MessageSquare, Sparkles, Maximize2, Minimize2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, User, MessageSquare, Sparkles, Maximize2, Minimize2, FileDown, Loader2 } from 'lucide-react';
 import { Photo } from './PhotoGrid';
 import { Message } from './MessageBoard';
 
@@ -176,6 +176,30 @@ export default function InteractiveAlbum({ eventName, photos, messages }: Intera
     }
   }, []);
 
+  const [pdfMenuOpen, setPdfMenuOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState<{ current: number; total: number } | null>(null);
+
+  const waitForImages = async (el: HTMLElement) => {
+    const imgs = Array.from(el.querySelectorAll('img'));
+    await Promise.all(
+      imgs.map(async (img) => {
+        if (!img.complete) {
+          await new Promise<void>((resolve) => {
+            img.addEventListener('load', () => resolve(), { once: true });
+            img.addEventListener('error', () => resolve(), { once: true });
+          });
+        }
+        // decode() garante que os pixels já estão prontos para desenhar, não só "carregados"
+        try {
+          await img.decode();
+        } catch {
+          // ignora falha de decode (ex.: imagem quebrada) e segue com o que tem
+        }
+      })
+    );
+  };
+
   const getOptimizedUrl = (url: string, width: number = 1000) => {
     if (!url.includes('cloudinary.com')) return url;
     return url.replace('/upload/', `/upload/f_auto,q_auto,w_${width},c_limit/`);
@@ -211,17 +235,82 @@ export default function InteractiveAlbum({ eventName, photos, messages }: Intera
     return list;
   }, [photos, messages, orientations]);
 
+  const exportPdf = useCallback(
+    async (orientation: 'landscape' | 'portrait') => {
+      if (exporting || !containerRef.current) return;
+      setPdfMenuOpen(false);
+      setExporting(true);
+      const originalPage = currentPage;
+
+      try {
+        const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+          import('html2canvas-pro'),
+          import('jspdf'),
+        ]);
+
+        const pdf = new jsPDF({ orientation, unit: 'pt', format: 'a4' });
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const margin = 20;
+
+        for (let i = 0; i < pages.length; i++) {
+          setExportProgress({ current: i + 1, total: pages.length });
+          setCurrentPage(i);
+
+          // espera o React re-renderizar a folha e as imagens carregarem
+          await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+          if (containerRef.current) await waitForImages(containerRef.current);
+          await new Promise((resolve) => setTimeout(resolve, 120));
+
+          const canvas = await html2canvas(containerRef.current!, {
+            backgroundColor: null,
+            scale: 2,
+            useCORS: true,
+            ignoreElements: (el) => el.getAttribute('data-pdf-ignore') === 'true',
+          });
+
+          const imgData = canvas.toDataURL('image/jpeg', 0.92);
+          const availW = pageWidth - margin * 2;
+          const availH = pageHeight - margin * 2;
+          const ratio = Math.min(availW / canvas.width, availH / canvas.height);
+          const w = canvas.width * ratio;
+          const h = canvas.height * ratio;
+          const x = (pageWidth - w) / 2;
+          const y = (pageHeight - h) / 2;
+
+          if (i > 0) pdf.addPage();
+          pdf.setFillColor(13, 17, 40);
+          pdf.rect(0, 0, pageWidth, pageHeight, 'F');
+          pdf.addImage(imgData, 'JPEG', x, y, w, h);
+        }
+
+        const fileSlug = eventName.trim().replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'album';
+        pdf.save(`${fileSlug}.pdf`);
+      } catch (err) {
+        console.error('Erro ao exportar PDF:', err);
+        alert('Não foi possível gerar o PDF. Tente novamente.');
+      } finally {
+        setCurrentPage(originalPage);
+        setExporting(false);
+        setExportProgress(null);
+      }
+    },
+    [exporting, currentPage, pages, eventName]
+  );
+
   useEffect(() => {
     setCurrentPage((prev) => Math.min(prev, pages.length - 1));
   }, [pages.length]);
 
   const handlePrev = useCallback(() => {
+    if (exporting) return;
     setCurrentPage((prev) => Math.max(0, prev - 1));
-  }, []);
+  }, [exporting]);
 
   const handleNext = useCallback(() => {
+    if (exporting) return;
     setCurrentPage((prev) => Math.min(pages.length - 1, prev + 1));
-  }, [pages.length]);
+  }, [pages.length, exporting]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -264,15 +353,68 @@ export default function InteractiveAlbum({ eventName, photos, messages }: Intera
           }}
         />
 
-        {/* BOTÃO DE TELA CHEIA */}
-        <button
-          onClick={toggleFullscreen}
-          className="btn btn-onbook btn-icon absolute top-4 right-4 sm:top-6 sm:right-6 z-20"
-          style={{ backdropFilter: 'blur(4px)' }}
-          title={isFullscreen ? 'Sair da tela cheia' : 'Expandir álbum em tela cheia'}
-        >
-          {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-        </button>
+        {/* AÇÕES DO ÁLBUM: EXPORTAR PDF + TELA CHEIA (fora da captura do PDF) */}
+        <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20 flex items-center gap-2" data-pdf-ignore="true">
+          <div className="relative">
+            <button
+              onClick={() => setPdfMenuOpen((prev) => !prev)}
+              className="btn btn-onbook btn-icon"
+              style={{ backdropFilter: 'blur(4px)' }}
+              title="Exportar álbum em PDF"
+              disabled={exporting}
+            >
+              {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
+            </button>
+
+            {pdfMenuOpen && (
+              <div
+                className="absolute right-0 mt-2 flex flex-col gap-1 p-1.5 rounded-lg"
+                style={{ background: 'var(--color-onbook-chip-bg)', border: '1px solid var(--color-onbook-divider)', backdropFilter: 'blur(6px)' }}
+              >
+                <button
+                  onClick={() => exportPdf('portrait')}
+                  className="btn btn-onbook text-xs justify-start"
+                  style={{ background: 'transparent', border: 'none' }}
+                >
+                  PDF Retrato
+                </button>
+                <button
+                  onClick={() => exportPdf('landscape')}
+                  className="btn btn-onbook text-xs justify-start"
+                  style={{ background: 'transparent', border: 'none' }}
+                >
+                  PDF Paisagem
+                </button>
+              </div>
+            )}
+          </div>
+
+          <button
+            onClick={toggleFullscreen}
+            className="btn btn-onbook btn-icon"
+            style={{ backdropFilter: 'blur(4px)' }}
+            title={isFullscreen ? 'Sair da tela cheia' : 'Expandir álbum em tela cheia'}
+            disabled={exporting}
+          >
+            {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+          </button>
+        </div>
+
+        {/* PROGRESSO DA EXPORTAÇÃO (fora da captura do PDF) */}
+        {exporting && exportProgress && (
+          <div
+            className="absolute inset-0 z-30 flex items-center justify-center"
+            style={{ background: 'rgba(8, 10, 24, 0.75)', backdropFilter: 'blur(2px)' }}
+            data-pdf-ignore="true"
+          >
+            <div className="flex flex-col items-center gap-3 text-center px-6">
+              <Loader2 className="w-7 h-7 animate-spin" style={{ color: 'var(--color-onbook-text)' }} />
+              <p className="text-sm font-medium" style={{ color: 'var(--color-onbook-text)' }}>
+                Gerando PDF... folha {exportProgress.current} de {exportProgress.total}
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* LOMBADA / DOBRA */}
         {currentPageData.type === 'cover' ? (
@@ -282,7 +424,10 @@ export default function InteractiveAlbum({ eventName, photos, messages }: Intera
         )}
 
         {/* CONTEÚDO DINÂMICO DA FOLHA */}
-        <div key={currentPage} className="adx-page-turn relative z-10 flex-1 flex flex-col min-h-0">
+        <div
+          key={currentPage}
+          className={`relative z-10 flex-1 flex flex-col min-h-0 ${exporting ? '' : 'adx-page-turn'}`}
+        >
 
           {/* == PÁGINA 1: CAPA == */}
           {currentPageData.type === 'cover' && (
@@ -436,7 +581,7 @@ export default function InteractiveAlbum({ eventName, photos, messages }: Intera
           <div className="flex items-center gap-2 sm:gap-3">
             <button
               onClick={handlePrev}
-              disabled={currentPage === 0}
+              disabled={currentPage === 0 || exporting}
               className="btn btn-onbook"
               title="Folha anterior (Seta Esquerda)"
             >
@@ -446,7 +591,7 @@ export default function InteractiveAlbum({ eventName, photos, messages }: Intera
 
             <button
               onClick={handleNext}
-              disabled={currentPage === pages.length - 1}
+              disabled={currentPage === pages.length - 1 || exporting}
               className="btn btn-primary-solid"
               title="Próxima folha (Seta Direita)"
             >
